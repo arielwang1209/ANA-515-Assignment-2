@@ -1,0 +1,77 @@
+---
+title: "ANA 515 Assignment 2"
+author: "Yuening (Ariel) Wang"
+date: "2023-06-18"
+output: html_document
+---
+The data used of this report is the free data set found on Kaggle customer information of a hotel. It includes the customer emails, credit card number, room type, amenities fee, check-in and check-out date, room rate and billing address. I wish to use this data to research what is the customer demographic and hope to see what ad we should put out and attract more high value customer. This data set is saved in CSV file and the delimiter is ‘,’. 
+
+
+```{r install, echo=TRUE}
+#set up packages
+library(tidyverse)
+library(dplyr)
+library(knitr)
+```
+Reading the data into R
+```{r getdata, echo=TRUE}
+#Used dplyr package to read in the data
+data <-read.csv("/Users/wangyuening/Desktop/McDaniel /Data Storage/Assignment 2/hotel_guests_dataset.csv")
+
+```
+Clean the data
+```{r clean data, echo=TRUE}
+#change the card number from scientific number to text
+data <- data %>%
+  mutate(credit_card_number = format(credit_card_number, scientific = FALSE))
+```
+```{r change_name,echo=TRUE}
+#Changing the column name 'X' to 'Record#' 
+data <- data %>%
+  rename('Record#' = X)
+```
+```{r change to date data,echo=TRUE}
+#change the checkin and check out date to date format
+data$checkin_date <- as.Date(data$checkin_date, format = "%d %b %Y")
+data$checkout_date <- as.Date(data$checkout_date, format = "%d %b %Y")
+```
+
+```{r filter data, echo=TRUE}
+# There are some rows that has checkout data earlier than checkin date, which is not righ, so we need to filtered out the rows that the checkout_data is earlier than checkin_data
+filtered_data <- data %>%
+  filter(checkout_date > checkin_date)
+```
+```{r add duration,echo=TRUE}
+#Add a column to calculate the duration of a customer's stay
+filtered_data <- filtered_data %>%
+  mutate(duration_days= as.numeric(difftime(checkout_date, checkin_date, units = "days")))
+```
+
+Characteristics of the data
+
+This dataframe has `r nrow(filtered_data)` rows and `r ncol(filtered_data)` columns. The names of the columns and a brief description of each are in the table below:
+
+```{r table,echo=TRUE}
+# Get the column names and descriptions
+column_names <- colnames(filtered_data)
+column_descriptions <- c("Record# of each transaction record", "Guest'eamil", "whether the cusotmer has rewards point","What room did the customer stayed","Whether customer has amenities fee","Checkin data for this transaction","Checkout data for this transaction","Room rate for each customer","The billing address of the customer","The credit card number of the customer","how many days the customer stayed")  # Provide descriptions for each column
+
+# Combine column names and descriptions into a data frame
+summary_table <- data.frame("Column Name" = column_names, "Description" = column_descriptions)
+
+# Create the table using kable
+table <- kable(summary_table)
+
+print(summary_table)
+```
+Summary statistics
+```{r pick 3 columns, echo=TRUE}
+#pickup out 3 columes
+filtered_data2 <- filtered_data %>%
+  select(amenities_fee, room_rate, duration_days)
+```
+```{r summary data, echo=TRUE}
+#Summary 
+summary_info <-summary(filtered_data2)
+summary_info
+```
